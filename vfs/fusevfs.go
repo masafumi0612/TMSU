@@ -600,6 +600,8 @@ func (vfs FuseVfs) tagDirectories(tx *storage.Tx) ([]fuse.DirEntry, fuse.Status)
 	}
 
 	entries := make([]fuse.DirEntry, 0, len(tags))
+	file_linkNames := []string{}
+
 	for _, tag := range tags {
 		tagName := escape(tag.Name)
 
@@ -608,6 +610,25 @@ func (vfs FuseVfs) tagDirectories(tx *storage.Tx) ([]fuse.DirEntry, fuse.Status)
 		}
 
 		entries = append(entries, fuse.DirEntry{Name: tagName, Mode: fuse.S_IFDIR})
+
+		path := vfs.splitPath(tagName)
+		expression := pathToExpression(path)
+
+		files, err := vfs.store.FilesForQuery(tx, expression, "", false, false, "name")
+		if err != nil {
+			log.Fatalf("could not query files: %v", err)
+		}
+
+		for _, file := range files {
+			linkName := vfs.getLinkName(file)
+			file_linkNames = append(file_linkNames, linkName)
+		}
+	}
+
+	uniqued_file_linkNames := sliceUnique(file_linkNames)
+
+	for _, file_entry := range uniqued_file_linkNames {
+		entries = append(entries, fuse.DirEntry{Name: file_entry, Mode: fuse.S_IFLNK})
 	}
 
 	// show help file until there are three tags
@@ -1163,4 +1184,17 @@ func unescape(name string) string {
 	name = strings.Replace(name, "\u200B\u2215", `/`, -1)
 	name = strings.Replace(name, "\u200B\u2216", `\`, -1)
 	return name
+}
+
+func sliceUnique(target []string) (unique []string) {
+	m := map[string]bool{}
+
+	for _, v := range target {
+		if !m[v] {
+			m[v] = true
+			unique = append(unique, v)
+		}
+	}
+
+	return unique
 }

@@ -988,13 +988,7 @@ func (vfs FuseVfs) readTaggedEntryLink(tx *storage.Tx, path []string) (string, f
 		log.Fatalf("could not find file %v in database.", fileId)
 	}
 
-	absDirPath := filepath.Join(vfs.mountPath, filepath.Join(path[:len(path)-1]...))
-	relPath, err := filepath.Rel(absDirPath, file.Path())
-	if err != nil {
-		log.Fatalf("could not make relative path: %v", err)
-	}
-
-	return relPath, fuse.OK
+	return file.Path(), fuse.OK
 }
 
 func (vfs FuseVfs) getLinkName(file *entities.File) string {

@@ -875,6 +875,16 @@ func (vfs FuseVfs) openTaggedEntryDir(tx *storage.Tx, path []string) ([]fuse.Dir
 	}
 
 	entries := make([]fuse.DirEntry, 0, len(files)+len(furtherTagNames))
+
+	for _, valueName := range valueNames {
+		valueName = escape(valueName)
+		entries = append(entries, fuse.DirEntry{Name: "=" + valueName, Mode: fuse.S_IFDIR | 0755})
+	}
+
+	if len(valueNames) > 0 {
+		return entries, fuse.OK
+	}
+
 	for _, tagName := range furtherTagNames {
 		tagName = escape(tagName)
 
@@ -888,11 +898,6 @@ func (vfs FuseVfs) openTaggedEntryDir(tx *storage.Tx, path []string) ([]fuse.Dir
 		}
 
 		entries = append(entries, fuse.DirEntry{Name: tagName, Mode: fuse.S_IFDIR | 0755})
-	}
-
-	for _, valueName := range valueNames {
-		valueName = escape(valueName)
-		entries = append(entries, fuse.DirEntry{Name: "=" + valueName, Mode: fuse.S_IFDIR | 0755})
 	}
 
 	for _, file := range files {

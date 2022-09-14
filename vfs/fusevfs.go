@@ -995,13 +995,15 @@ func (vfs FuseVfs) getLinkName(file *entities.File) string {
 	extension := filepath.Ext(file.Path())
 	fileName := filepath.Base(file.Path())
 	linkName := fileName[0 : len(fileName)-len(extension)]
+	path := vfs.splitPath(file.Path())
+	upperdirName := path[len(path)-2]
 	suffix := "." + fileIdToAscii(file.Id) + extension
 
 	if len(linkName)+len(suffix) > 255 {
 		linkName = linkName[0 : 255-len(suffix)]
 	}
 
-	return linkName + suffix
+	return linkName + "(" + upperdirName + ")" + suffix
 }
 
 func (vfs FuseVfs) tagNamesToIds(tx *storage.Tx, tagNames []string) (entities.TagIds, error) {

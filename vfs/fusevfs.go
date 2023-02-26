@@ -900,6 +900,10 @@ func (vfs FuseVfs) openTaggedEntryDir(tx *storage.Tx, path []string) ([]fuse.Dir
 		entries = append(entries, fuse.DirEntry{Name: tagName, Mode: fuse.S_IFDIR | 0755})
 	}
 
+	if len(files) < 2 {
+		entries = make([]fuse.DirEntry, 0, len(files))
+	}
+
 	for _, file := range files {
 		linkName := vfs.getLinkName(file)
 		entries = append(entries, fuse.DirEntry{Name: linkName, Mode: fuse.S_IFLNK})
